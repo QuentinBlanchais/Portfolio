@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Homepage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caudex&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow-x: hidden;
+      background: #F5F1F1;
+      font-family: 'Caudex', serif;
+      color: #1a1a1a;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .content {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+      min-height: 100vh;
+      padding: 40px 80px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: auto;
+      position: relative;
+      z-index: 20;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      width: 24px;
+      height: 32px;
+    }
+    .logo-text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+    }
+    .menu-icon {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .hero {
+      margin-top: 180px;
+      max-width: 731px;
+    }
+    .main-content {
+      position: fixed;
+      bottom: 80px;
+      left: 80px;
+      width: 1520px;
+      max-width: calc(100vw - 160px);
+      display: flex;
+      flex-direction: column;
+      gap: 80px;
+      pointer-events: auto;
+      z-index: 20;
+    }
+    .tagline-container {
+      max-width: 731px;
+    }
+    .tagline {
+      font-size: 32px;
+      line-height: 1.4;
+      user-select: none;
+    }
+    .projects {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0 24px;
+    }
+    .project-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .project-link {
+      font-size: 64px;
+      line-height: 1.2;
+      text-decoration: none;
+      color: #1a1a1a;
+      pointer-events: auto;
+      position: relative;
+      z-index: 20;
+      display: inline-block;
+    }
+    .project-link .wiggly-underline {
+      position: absolute;
+      left: 0;
+      bottom: 0px;
+      width: 100%;
+      height: 16px;
+      pointer-events: none;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.35s ease-out;
+      z-index: -1;
+    }
+    .project-link:hover .wiggly-underline {
+      clip-path: inset(0 0 0 0);
+    }
+    .project-link .wiggly-underline svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .project-link .wiggly-underline path {
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      background: #1a1a1a;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .arrow-icon {
+      width: 16px;
+      height: 18px;
+    }
+    @media (max-width: 1200px) {
+      .project-link {
+        font-size: 48px;
+      }
+      .content {
+        padding: 24px 40px;
+      }
+    }
+    @media (max-width: 768px) {
+      .project-link {
+        font-size: 32px;
+      }
+      .tagline {
+        font-size: 24px;
+      }
+      .content {
+        padding: 20px 24px;
+      }
+      .hero {
+        margin-top: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="glCanvas"></canvas>
+  
+  <div class="content">
+    <header>
+      <div class="logo">
+        <img src="logo.png" alt="Logo" class="logo-icon" width="24" height="32">
+        <span class="logo-text">Quentin Blanchais</span>
+      </div>
+      <img src="book-icon.png" alt="Menu" width="16" height="16" class="menu-icon">
+    </header>
+
+    <main class="hero"></main>
+
+    <div class="main-content">
+      <div class="tagline-container">
+        <p class="tagline">I specialise in crafting lovable product experiences shaped by user needs and business goals.</p>
+      </div>
+      
+      <div class="projects">
+        <div class="project-item">
+          <a href="joining-jira.html" class="project-link">Joining Jira</a>
+          <img src="lock-icon.png" alt="Lock" width="16" height="18" style="vertical-align: middle;">
+        </div>
+        <div class="dot"></div>
+        <a href="#" class="project-link">Assigning agent</a>
+        <div class="dot"></div>
+        <a href="#" class="project-link">Custom onboarding</a>
+        <div class="dot"></div>
+        <a href="#" class="project-link">Work item view</a>
+        <div class="dot"></div>
+        <a href="#" class="project-link">Express Wifi by Facebook</a>
+        <a href="#" class="project-link">Gumtree ad listing</a>
+        <div class="dot"></div>
+        <a href="#" class="project-link">Denza EV infotainment</a>
+        <a href="#" class="project-link">BMW motorcycle app</a>
+        <div class="dot"></div>
+        <a href="#" class="project-link">BottlesXO app</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js?v=98" defer></script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>In Construction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Caudex&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Caudex', serif;
+      background: #F0EFEB;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: #1a1a1a;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .content {
+      padding: 40px 80px 40px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      animation: elementFadeIn 0.4s ease-out forwards;
+      position: relative;
+    }
+    .center-text {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      font-weight: 300;
+      color: #1a1a1a;
+      opacity: 0;
+      animation: elementFadeIn 0.6s ease-out 0.2s forwards;
+    }
+    .atlassian-link {
+      color: #1a1a1a;
+      text-decoration: none;
+      pointer-events: auto;
+      position: relative;
+      left: 2px;
+      display: inline-block;
+      transition: opacity 0.2s ease;
+    }
+    .atlassian-link:hover {
+      opacity: 0.8;
+    }
+    .atlassian-link .wiggly-underline {
+      position: absolute;
+      left: 0;
+      bottom: -6px;
+      width: 100%;
+      height: 8px;
+      pointer-events: none;
+      overflow: visible;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.35s ease-out;
+    }
+    .atlassian-link:hover .wiggly-underline {
+      clip-path: inset(0 0 0 0);
+    }
+    .atlassian-link .wiggly-underline svg {
+      display: block;
+      width: 200%;
+      height: 100%;
+      animation: wiggleMove 1.6s linear infinite;
+    }
+    .atlassian-link .wiggly-underline path {
+      fill: none;
+      stroke: #E8766D;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    @keyframes wiggleMove {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      animation: elementFadeIn 0.6s ease-out 0.2s forwards;
+    }
+    .logo-icon {
+      width: 24px;
+      height: 32px;
+    }
+    .logo-text {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      font-weight: 300;
+    }
+    .linkedin-btn {
+      position: fixed;
+      top: 40px;
+      right: 40px;
+      width: 40px;
+      height: 40px;
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: auto;
+      box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
+      transition: box-shadow 0.1s ease-out, transform 0.15s ease-out;
+      opacity: 0;
+      animation: elementFadeIn 0.4s ease-out forwards;
+    }
+    .linkedin-btn:hover {
+      transform: scale(1.05);
+    }
+    .linkedin-btn img {
+      width: 16px;
+      height: 16px;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      transform: translateY(-64px);
+      position: relative;
+    }
+    @keyframes letterFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes elementFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    h1 {
+      font-size: 64px;
+      color: #1a1a1a;
+      line-height: 1.2;
+      text-align: center;
+      font-style: normal;
+      font-weight: 400;
+      user-select: none;
+    }
+    h1 .letter {
+      display: inline-block;
+      opacity: 0;
+      animation: letterFadeIn 0.4s ease-out forwards;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 40px;
+      font-size: 18px;
+      color: #1a1a1a;
+      text-decoration: none;
+      border-bottom: 1px solid #1a1a1a;
+      padding-bottom: 2px;
+      transition: opacity 0.2s;
+    }
+    a.back-link:hover {
+      opacity: 0.7;
+    }
+    @media (max-width: 768px) {
+      .content {
+        padding: 20px 24px;
+      }
+      h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="glCanvas"></canvas>
+  <lottie-player id="mouseHint" src="mouse-animation.json" background="transparent" speed="1" style="position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); width: 72px; height: 68px; opacity: 0; z-index: 100; transition: opacity 1.5s ease-in-out;" loop autoplay></lottie-player>
+  <button class="linkedin-btn" onclick="window.open('https://www.linkedin.com/in/quentinblanchais/', '_blank')">
+    <img src="linkedin-icon.png" alt="LinkedIn">
+  </button>
+  <div class="content">
+    <header>
+      <div class="logo">
+        <img src="logo.png" alt="Logo" class="logo-icon" width="24" height="32">
+        <span class="logo-text">Quentin Blanchais</span>
+      </div>
+      <span class="center-text">Currently designing at <a href="https://www.atlassian.com" target="_blank" class="atlassian-link">Atlassian<span class="wiggly-underline"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0,4 Q5,0 10,4 T20,4 T30,4 T40,4 T50,4 T60,4 T70,4 T80,4 T90,4 T100,4 T110,4 T120,4"/></svg></span></a></span>
+    </header>
+    <div class="main">
+      <div class="container">
+        <h1>Portfolio coming soon,<br>stay tuned!</h1>
+      </div>
+    </div>
+  </div>
+  <script src="script.js?v=147" defer></script>
+  <script>
+    const linkedinBtn = document.querySelector('.linkedin-btn');
+    let currentShadowOpacity = 0;
+    let targetShadowOpacity = 0;
+    let shadowX = 0, shadowY = 0;
+    
+    document.addEventListener('mousemove', (e) => {
+      const rect = linkedinBtn.getBoundingClientRect();
+      const btnX = rect.left + rect.width / 2;
+      const btnY = rect.top + rect.height / 2;
+      const dx = e.clientX - btnX;
+      const dy = e.clientY - btnY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist <= 100) {
+        shadowX = -(dx / 100) * 16;
+        shadowY = -(dy / 100) * 16;
+        targetShadowOpacity = 0.15;
+      } else {
+        targetShadowOpacity = 0;
+      }
+    });
+    
+    function animateShadow() {
+      currentShadowOpacity += (targetShadowOpacity - currentShadowOpacity) * 0.15;
+      if (currentShadowOpacity < 0.001) currentShadowOpacity = 0;
+      linkedinBtn.style.boxShadow = `${shadowX}px ${shadowY}px 2px rgba(0, 0, 0, ${currentShadowOpacity})`;
+      requestAnimationFrame(animateShadow);
+    }
+    animateShadow();
+    
+    const mouseHint = document.getElementById('mouseHint');
+    let hintTimeout;
+    
+    function showHint() {
+      mouseHint.style.opacity = '1';
+    }
+    
+    function hideHint() {
+      mouseHint.style.opacity = '0';
+    }
+    
+    function resetHintTimer() {
+      hideHint();
+      clearTimeout(hintTimeout);
+      hintTimeout = setTimeout(showHint, 6000);
+    }
+    
+    document.addEventListener('click', resetHintTimer);
+    document.addEventListener('touchstart', resetHintTimer, { passive: true });
+    hintTimeout = setTimeout(showHint, 6000);
+    
+    const h1 = document.querySelector('h1');
+    const parts = h1.innerHTML.split('<br>');
+    let letterIndex = 0;
+    h1.innerHTML = parts.map(part => {
+      return part.split('').map(char => {
+        if (char === ' ') return ' ';
+        const delay = letterIndex * 30;
+        letterIndex++;
+        return `<span class="letter" style="animation-delay: ${delay}ms">${char}</span>`;
+      }).join('');
+    }).join('<br>');
+  </script>
+</body>
+</html>
