@@ -387,12 +387,13 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
   
-  const pushStrength = (0.8 + Math.random() * 0.5) * dpr;
+  const basePush = isMobile ? 2.0 : 0.8;
+  const pushStrength = (basePush + Math.random() * 0.5) * dpr;
   
   shape.vx += Math.cos(pushAngle) * pushStrength;
   shape.vy += Math.sin(pushAngle) * pushStrength;
   
-  const maxSpeed = 0.42 * dpr;
+  const maxSpeed = isMobile ? 1.0 * dpr : 0.42 * dpr;
   const speed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
   if (speed > maxSpeed) {
     shape.vx = (shape.vx / speed) * maxSpeed;
@@ -653,9 +654,10 @@ function updateZones() {
   innerZoneHalfW = 360 * dpr;
   innerZoneHalfH = 200 * dpr;
   cornerRadius = 12.0 * dpr;
-  outwardDriftSpeed = 0.175 * dpr * 0.02;
-  inwardDriftSpeed = 0.05 * dpr * 0.02;
-  pushStrengthDrift = 0.15 * dpr * 0.05;
+  const driftMultiplier = isMobile ? 2.5 : 1.0;
+  outwardDriftSpeed = 0.175 * dpr * 0.02 * driftMultiplier;
+  inwardDriftSpeed = 0.05 * dpr * 0.02 * driftMultiplier;
+  pushStrengthDrift = 0.15 * dpr * 0.05 * driftMultiplier;
 }
 updateZones();
 window.addEventListener('resize', updateZones);

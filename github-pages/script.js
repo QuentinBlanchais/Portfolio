@@ -5,6 +5,54 @@ if (!gl) {
   alert('WebGL not supported');
 }
 
+// Mobile detection - checks screen width (narrow viewport) or touch capability
+function checkIsMobile() {
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isNarrowViewport = window.innerWidth < 1024;
+  return isNarrowViewport || isTouchDevice;
+}
+let isMobile = checkIsMobile();
+
+// Apply mobile class to body for CSS-based hiding
+function updateMobileClass() {
+  if (isMobile) {
+    document.body.classList.add('is-mobile');
+    document.body.classList.remove('is-desktop');
+  } else {
+    document.body.classList.add('is-desktop');
+    document.body.classList.remove('is-mobile');
+  }
+}
+
+// Set the appropriate hint animation based on device type
+function updateHintAnimation() {
+  const mouseHint = document.getElementById('mouseHint');
+  if (mouseHint) {
+    const animationSrc = isMobile ? 'touch-animation.json' : 'mouse-animation.json';
+    if (mouseHint.getAttribute('src') !== animationSrc) {
+      mouseHint.load(animationSrc);
+    }
+  }
+}
+
+// Update mobile detection on resize
+window.addEventListener('resize', () => {
+  isMobile = checkIsMobile();
+  updateMobileClass();
+  updateHintAnimation();
+});
+
+// Initial mobile class and hint animation update when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    updateMobileClass();
+    updateHintAnimation();
+  });
+} else {
+  updateMobileClass();
+  updateHintAnimation();
+}
+
 // Cache frequently used values
 let dpr = window.devicePixelRatio || 1;
 let canvasWidth = 0;
@@ -37,11 +85,33 @@ function resizeCanvas() {
   updateTextCenter();
 }
 
+let prevTextCenterX = 0;
+let prevTextCenterY = 0;
+
+function repositionShapesOnResize() {
+  const dx = textCenterX - prevTextCenterX;
+  const dy = textCenterY - prevTextCenterY;
+  
+  if (dx !== 0 || dy !== 0) {
+    for (const shape of shapes) {
+      shape.x += dx;
+      shape.baseY += dy;
+      shape.y = shape.baseY;
+    }
+  }
+  
+  prevTextCenterX = textCenterX;
+  prevTextCenterY = textCenterY;
+}
+
 window.addEventListener('resize', () => {
   resizeCanvas();
+  repositionShapesOnResize();
   if (typeof updateZones === 'function') updateZones();
 });
 resizeCanvas();
+prevTextCenterX = textCenterX;
+prevTextCenterY = textCenterY;
 
 const vertexShaderSource = `
   precision mediump float;
@@ -317,12 +387,13 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
   
-  const pushStrength = (0.8 + Math.random() * 0.5) * dpr;
+  const basePush = isMobile ? 2.0 : 0.8;
+  const pushStrength = (basePush + Math.random() * 0.5) * dpr;
   
   shape.vx += Math.cos(pushAngle) * pushStrength;
   shape.vy += Math.sin(pushAngle) * pushStrength;
   
-  const maxSpeed = 0.42 * dpr;
+  const maxSpeed = isMobile ? 1.0 * dpr : 0.42 * dpr;
   const speed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
   if (speed > maxSpeed) {
     shape.vx = (shape.vx / speed) * maxSpeed;
@@ -395,7 +466,8 @@ function createShapeAt(x, y, isAutoSpawned = false) {
   const rotation = Math.random() * Math.PI * 2;
   const rotationSpeed = (Math.random() - 0.5) * 0.003;
   
-  const size = (120 + Math.random() * 40) * dpr;
+  const baseSize = isMobile ? (72 + Math.random() * 24) : (120 + Math.random() * 40);
+  const size = baseSize * dpr;
   
   const wavePhase = Math.random() * Math.PI * 2;
   const waveSpeed = 0.01 + Math.random() * 0.01;
@@ -582,9 +654,10 @@ function updateZones() {
   innerZoneHalfW = 360 * dpr;
   innerZoneHalfH = 200 * dpr;
   cornerRadius = 12.0 * dpr;
-  outwardDriftSpeed = 0.175 * dpr * 0.02;
-  inwardDriftSpeed = 0.05 * dpr * 0.02;
-  pushStrengthDrift = 0.15 * dpr * 0.05;
+  const driftMultiplier = isMobile ? 2.5 : 1.0;
+  outwardDriftSpeed = 0.175 * dpr * 0.02 * driftMultiplier;
+  inwardDriftSpeed = 0.05 * dpr * 0.02 * driftMultiplier;
+  pushStrengthDrift = 0.15 * dpr * 0.05 * driftMultiplier;
 }
 updateZones();
 window.addEventListener('resize', updateZones);
