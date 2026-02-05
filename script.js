@@ -387,7 +387,7 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
   
-  const basePush = isMobile ? 2.0 : 0.8;
+  const basePush = isMobile ? 3.0 : 1.2;
   const pushStrength = (basePush + Math.random() * 0.5) * dpr;
   
   shape.vx += Math.cos(pushAngle) * pushStrength;
@@ -552,12 +552,12 @@ function spawnInitialShapes() {
 // Spawn initial shapes with delay to let text animation complete
 setTimeout(spawnInitialShapes, 1300);
 
-// Auto-spawn shapes when fewer than 5 are active
+// Auto-spawn shapes when fewer than 6 are active
 setInterval(() => {
   if (!isLandingPage) return;
   
   const activeShapes = shapes.filter(s => !s.popping).length;
-  if (activeShapes < 5) {
+  if (activeShapes < 6) {
     const dpr = window.devicePixelRatio || 1;
     const textEl = document.querySelector('.content-wrapper');
     const rect = textEl ? textEl.getBoundingClientRect() : null;

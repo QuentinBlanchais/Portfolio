@@ -235,6 +235,15 @@
     .is-mobile #mouseHint {
       bottom: 10% !important;
     }
+    @keyframes mobileFadeInOut {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .is-mobile #mouseHint.hint-visible {
+      animation: mobileFadeInOut 3s ease-in-out infinite !important;
+    }
   </style>
 </head>
 <body>
@@ -293,10 +302,12 @@
     let hintTimeout;
     
     function showHint() {
+      mouseHint.classList.add('hint-visible');
       mouseHint.style.opacity = '1';
     }
     
     function hideHint() {
+      mouseHint.classList.remove('hint-visible');
       mouseHint.style.opacity = '0';
     }
     
