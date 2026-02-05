@@ -32,7 +32,7 @@
       pointer-events: none;
     }
     .content {
-      padding: 40px 80px 40px 40px;
+      padding: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -40,13 +40,14 @@
       z-index: 1;
       pointer-events: none;
     }
-    header {
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       opacity: 0;
       animation: elementFadeIn 0.4s ease-out forwards;
       position: relative;
+      padding: 40px 40px 0 40px;
     }
     .center-text {
       position: absolute;
@@ -123,9 +124,6 @@
       font-weight: 300;
     }
     .linkedin-btn {
-      position: fixed;
-      top: 40px;
-      right: 40px;
       width: 40px;
       height: 40px;
       background: #fff;
@@ -135,7 +133,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
       pointer-events: auto;
       box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
       transition: box-shadow 0.1s ease-out, transform 0.15s ease-out;
@@ -208,35 +205,42 @@
     }
     @media (max-width: 768px) {
       .content {
-        padding: 20px 24px;
+        padding: 0;
       }
       h1 {
         font-size: 32px;
       }
     }
+    /* Hide elements on mobile */
+    .is-mobile .center-text {
+      display: none;
+    }
+    .is-mobile #mouseHint {
+      bottom: 15% !important;
+    }
   </style>
 </head>
 <body>
   <canvas id="glCanvas"></canvas>
-  <lottie-player id="mouseHint" src="mouse-animation.json" background="transparent" speed="1" style="position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); width: 72px; height: 68px; opacity: 0; z-index: 100; transition: opacity 1.5s ease-in-out;" loop autoplay></lottie-player>
-  <button class="linkedin-btn" onclick="window.open('https://www.linkedin.com/in/quentinblanchais/', '_blank')">
-    <img src="linkedin-icon.png" alt="LinkedIn">
-  </button>
+  <lottie-player id="mouseHint" background="transparent" speed="1" style="position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); width: 72px; height: 68px; opacity: 0; z-index: 100; transition: opacity 1.5s ease-in-out;" loop autoplay></lottie-player>
   <div class="content">
-    <header>
+    <div class="header">
       <div class="logo">
         <img src="logo.png" alt="Logo" class="logo-icon" width="24" height="32">
         <span class="logo-text">Quentin Blanchais</span>
       </div>
       <span class="center-text">Currently designing at <a href="https://www.atlassian.com" target="_blank" class="atlassian-link">Atlassian<span class="wiggly-underline"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0,4 Q5,0 10,4 T20,4 T30,4 T40,4 T50,4 T60,4 T70,4 T80,4 T90,4 T100,4 T110,4 T120,4"/></svg></span></a></span>
-    </header>
+      <button class="linkedin-btn" onclick="window.open('https://www.linkedin.com/in/quentinblanchais/', '_blank')">
+        <img src="linkedin-icon.png" alt="LinkedIn">
+      </button>
+    </div>
     <div class="main">
       <div class="container">
         <h1>Portfolio coming soon,<br>stay tuned!</h1>
       </div>
     </div>
   </div>
-  <script src="script.js?v=147" defer></script>
+  <script src="script.js?v=148" defer></script>
   <script>
     const linkedinBtn = document.querySelector('.linkedin-btn');
     let currentShadowOpacity = 0;

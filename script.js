@@ -5,6 +5,54 @@ if (!gl) {
   alert('WebGL not supported');
 }
 
+// Mobile detection - checks screen width (narrow viewport) or touch capability
+function checkIsMobile() {
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isNarrowViewport = window.innerWidth < 1024;
+  return isNarrowViewport || isTouchDevice;
+}
+let isMobile = checkIsMobile();
+
+// Apply mobile class to body for CSS-based hiding
+function updateMobileClass() {
+  if (isMobile) {
+    document.body.classList.add('is-mobile');
+    document.body.classList.remove('is-desktop');
+  } else {
+    document.body.classList.add('is-desktop');
+    document.body.classList.remove('is-mobile');
+  }
+}
+
+// Set the appropriate hint animation based on device type
+function updateHintAnimation() {
+  const mouseHint = document.getElementById('mouseHint');
+  if (mouseHint) {
+    const animationSrc = isMobile ? 'touch-animation.json' : 'mouse-animation.json';
+    if (mouseHint.getAttribute('src') !== animationSrc) {
+      mouseHint.load(animationSrc);
+    }
+  }
+}
+
+// Update mobile detection on resize
+window.addEventListener('resize', () => {
+  isMobile = checkIsMobile();
+  updateMobileClass();
+  updateHintAnimation();
+});
+
+// Initial mobile class and hint animation update when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    updateMobileClass();
+    updateHintAnimation();
+  });
+} else {
+  updateMobileClass();
+  updateHintAnimation();
+}
+
 // Cache frequently used values
 let dpr = window.devicePixelRatio || 1;
 let canvasWidth = 0;
@@ -417,7 +465,8 @@ function createShapeAt(x, y, isAutoSpawned = false) {
   const rotation = Math.random() * Math.PI * 2;
   const rotationSpeed = (Math.random() - 0.5) * 0.003;
   
-  const size = (120 + Math.random() * 40) * dpr;
+  const baseSize = isMobile ? (72 + Math.random() * 24) : (120 + Math.random() * 40);
+  const size = baseSize * dpr;
   
   const wavePhase = Math.random() * Math.PI * 2;
   const waveSpeed = 0.01 + Math.random() * 0.01;
