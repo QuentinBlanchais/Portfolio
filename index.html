@@ -17,7 +17,7 @@
     }
     body {
       font-family: 'Caudex', serif;
-      background: #F0EFEB;
+      background: #F5F1F1;
       height: 100%;
       min-height: 100vh;
       overflow-x: hidden;
@@ -95,7 +95,7 @@
     }
     .atlassian-link .wiggly-underline path {
       fill: none;
-      stroke: #E8766D;
+      stroke: #469FF2;
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -112,8 +112,44 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      text-decoration: none;
+      color: inherit;
       opacity: 0;
       animation: elementFadeIn 0.6s ease-out 0.2s forwards;
+      transition: opacity 0.2s ease;
+    }
+    .logo:hover {
+      opacity: 0.8;
+    }
+    .logo-text {
+      position: relative;
+    }
+    .logo .wiggly-underline {
+      position: absolute;
+      left: 0;
+      bottom: -6px;
+      width: 100%;
+      height: 8px;
+      pointer-events: none;
+      overflow: visible;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.35s ease-out;
+    }
+    .logo:hover .wiggly-underline {
+      clip-path: inset(0 0 0 0);
+    }
+    .logo .wiggly-underline svg {
+      display: block;
+      width: 200%;
+      height: 100%;
+      animation: wiggleMove 1.6s linear infinite;
+    }
+    .logo .wiggly-underline path {
+      fill: none;
+      stroke: #469FF2;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .logo-icon {
       width: 24px;
@@ -251,11 +287,11 @@
   <lottie-player id="mouseHint" background="transparent" speed="1" style="position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); width: 72px; height: 68px; opacity: 0; z-index: 5; transition: opacity 1.5s ease-in-out;" loop autoplay></lottie-player>
   <div class="content">
     <div class="header">
-      <div class="logo">
+      <a href="/" class="logo">
         <img src="logo.png" alt="Logo" class="logo-icon" width="24" height="32">
-        <span class="logo-text">Quentin Blanchais</span>
-      </div>
-      <span class="center-text">Currently designing at <a href="https://www.atlassian.com" target="_blank" class="atlassian-link">Atlassian<span class="wiggly-underline"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0,4 Q5,0 10,4 T20,4 T30,4 T40,4 T50,4 T60,4 T70,4 T80,4 T90,4 T100,4 T110,4 T120,4"/></svg></span></a></span>
+        <span class="logo-text">Quentin Blanchais<span class="wiggly-underline"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0,4 Q5,0 10,4 T20,4 T30,4 T40,4 T50,4 T60,4 T70,4 T80,4 T90,4 T100,4 T110,4 T120,4"/></svg></span></span>
+      </a>
+      <span class="center-text">Currently designing at <a href="/" class="atlassian-link">Atlassian<span class="wiggly-underline"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0,4 Q5,0 10,4 T20,4 T30,4 T40,4 T50,4 T60,4 T70,4 T80,4 T90,4 T100,4 T110,4 T120,4"/></svg></span></a></span>
       <button class="linkedin-btn" onclick="window.open('https://www.linkedin.com/in/quentinblanchais/', '_blank')">
         <img src="linkedin-icon.png" alt="LinkedIn">
       </button>
@@ -266,7 +302,7 @@
       </div>
     </div>
   </div>
-  <script src="script.js?v=148" defer></script>
+  <script src="script.js?v=179" defer></script>
   <script>
     const linkedinBtn = document.querySelector('.linkedin-btn');
     let currentShadowOpacity = 0;

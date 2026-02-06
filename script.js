@@ -58,8 +58,9 @@ let dpr = window.devicePixelRatio || 1;
 let canvasWidth = 0;
 let canvasHeight = 0;
 
-// Detect if we're on landing page (index.html) or profile page
-const isLandingPage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html');
+// Detect if we're on landing page (index.html), 404 page, or profile page
+const is404Page = window.location.pathname.includes('404');
+const isLandingPage = window.location.pathname === '/' || window.location.pathname.endsWith('index.html') || is404Page;
 
 // Cache text element reference
 let textEl = null;
@@ -81,7 +82,7 @@ function resizeCanvas() {
   canvas.height = canvasHeight;
   canvas.style.width = window.innerWidth + 'px';
   canvas.style.height = window.innerHeight + 'px';
-  gl.viewport(0, 0, canvasWidth, canvasHeight);
+  if (gl) gl.viewport(0, 0, canvasWidth, canvasHeight);
   updateTextCenter();
 }
 
@@ -387,13 +388,13 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
   
-  const basePush = isMobile ? 3.0 : 1.2;
-  const pushStrength = (basePush + Math.random() * 0.5) * dpr;
+  const basePush = isMobile ? 6.0 : 2.4;
+  const pushStrength = (basePush + Math.random() * 1.0) * dpr;
   
   shape.vx += Math.cos(pushAngle) * pushStrength;
   shape.vy += Math.sin(pushAngle) * pushStrength;
   
-  const maxSpeed = isMobile ? 1.0 * dpr : 0.42 * dpr;
+  const maxSpeed = isMobile ? 2.0 * dpr : 0.84 * dpr;
   const speed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
   if (speed > maxSpeed) {
     shape.vx = (shape.vx / speed) * maxSpeed;
@@ -402,24 +403,39 @@ function pushShape(shape, fromX, fromY) {
   
   shape.rotationSpeed += (Math.random() - 0.5) * 0.003;
   shape.ignoreGravity = true;
+  
+  shape.driftSpeedMultiplier *= 2.6;
+}
+
+function handleInteraction(clientX, clientY, event) {
+  const dpr = window.devicePixelRatio || 1;
+  const interactX = clientX * dpr;
+  const interactY = clientY * dpr;
+  
+  const clickedShape = getClickedShape(interactX, interactY);
+  if (clickedShape) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    pushShape(clickedShape, interactX, interactY);
+    return true;
+  }
+  return false;
 }
 
 document.addEventListener('click', (e) => {
-  const dpr = window.devicePixelRatio || 1;
-  const clickX = e.clientX * dpr;
-  const clickY = e.clientY * dpr;
-  
-  const clickedShape = getClickedShape(clickX, clickY);
-  if (clickedShape) {
-    e.preventDefault();
-    e.stopPropagation();
-    pushShape(clickedShape, clickX, clickY);
+  if (handleInteraction(e.clientX, e.clientY, e)) {
     return;
   }
   
   if (e.target.closest('a, button, .project-link, header')) {
     return;
   }
+  
+  const dpr = window.devicePixelRatio || 1;
+  const clickX = e.clientX * dpr;
+  const clickY = e.clientY * dpr;
   
   const activeShapes = shapes.filter(s => !s.popping).length;
   
@@ -434,6 +450,15 @@ document.addEventListener('click', (e) => {
   createShapeAt(clickX, clickY);
 });
 
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 0) {
+    const touch = e.touches[0];
+    if (handleInteraction(touch.clientX, touch.clientY, e)) {
+      return;
+    }
+  }
+}, { passive: false });
+
 function createShapeAt(x, y, isAutoSpawned = false) {
   const dpr = window.devicePixelRatio || 1;
   
@@ -445,7 +470,11 @@ function createShapeAt(x, y, isAutoSpawned = false) {
   }
   
   let angle, speed;
-  if (isLandingPage) {
+  if (is404Page) {
+    // On 404 page, shapes start with downward velocity - slower movement
+    angle = Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+    speed = (0.3 + Math.random() * 0.2) * dpr;
+  } else if (isLandingPage) {
     if (isAutoSpawned) {
       // Auto-spawned shapes stay in place
       angle = 0;
@@ -498,12 +527,118 @@ function createShapeAt(x, y, isAutoSpawned = false) {
     shadowScale: 0,
     hasBeenClicked: false,
     isAutoSpawned: isAutoSpawned,
-    ignoreGravity: false
+    ignoreGravity: false,
+    driftSpeedMultiplier: 1.0
   });
+}
+
+// Create static shapes for 404 page with staggered fade-in animation
+function createStatic404Shapes() {
+  const dpr = window.devicePixelRatio || 1;
+  const centerX = canvasWidth / 2;
+  
+  // If canvas not ready, try again
+  if (canvasWidth === 0 || canvasHeight === 0) {
+    setTimeout(createStatic404Shapes, 100);
+    return;
+  }
+  
+  // Get text element position to place shapes below it
+  const textEl = document.querySelector('.content-wrapper');
+  const rect = textEl ? textEl.getBoundingClientRect() : null;
+  const textBottomY = rect ? (rect.bottom + 100) * dpr : canvasHeight / 2 + 200 * dpr; // 100px below text
+  
+  const positionScale = isMobile ? 0.6 : 1.0;
+  const baseSize = isMobile ? 70 : 110;
+  
+  // Positions relative to text - shapes pile below the text content
+  const positions = [
+    { x: -160, y: 60, rot: -0.15, size: 1.1 },     // left
+    { x: -50, y: 30, rot: 0, size: 1.0 },          // center-left
+    { x: -100, y: 120, rot: 0.25, size: 0.85 },    // top left
+    { x: 10, y: 140, rot: 0.1, size: 1.0 },        // top center
+    { x: 90, y: 100, rot: 0.08, size: 1.05 },      // right
+    { x: 50, y: 40, rot: 0.35, size: 0.9 },        // center-right
+    { x: 160, y: 60, rot: 0, size: 0.95 },         // far right
+    { x: 200, y: 110, rot: 0.15, size: 0.9 },      // top right
+    { x: 250, y: 50, rot: -0.1, size: 0.85 },      // far right edge
+  ];
+  
+  // Shuffle positions for random spawn order
+  const shuffledIndices = Array.from({ length: positions.length }, (_, i) => i);
+  for (let i = shuffledIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+  }
+  
+  // Generate randomized cumulative delays
+  const delays = [];
+  let cumulativeDelay = 0;
+  for (let i = 0; i < positions.length; i++) {
+    delays.push(cumulativeDelay);
+    cumulativeDelay += 400 + Math.random() * 600; // 400-1000ms between each (slower spawn)
+  }
+  
+  const startOffset = 40 * dpr; // Start 40px above final position
+  const animDuration = 600; // Animation duration in ms
+  const now = performance.now();
+  
+  for (let i = 0; i < positions.length; i++) {
+    const posIndex = shuffledIndices[i];
+    const pos = positions[posIndex];
+    const shapeType = posIndex % 8;
+    const color = colors[posIndex % colors.length];
+    
+    const size = baseSize * pos.size * dpr;
+    // Position below text content
+    const yOffset = pos.y * positionScale * dpr;
+    const finalY = textBottomY + yOffset;
+    
+    // Downward drift velocity (same as createShapeAt for 404) - slower movement
+    const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+    const speed = (0.25 + Math.random() * 0.15) * dpr;
+    
+    shapes.push({
+      x: centerX + pos.x * positionScale * dpr,
+      y: finalY - startOffset, // Start 40px above
+      baseY: finalY,
+      targetY: finalY, // Target position for animation
+      startY: finalY - startOffset, // Starting position
+      vx: Math.cos(angle) * speed * 0.3,
+      vy: Math.sin(angle) * speed, // Downward velocity
+      shapeType,
+      color: color.start,
+      color2: color.end,
+      rotation: pos.rot + (Math.random() - 0.5) * 0.2,
+      rotationSpeed: (Math.random() - 0.5) * 0.002,
+      scale: 1,
+      size,
+      wavePhase: Math.random() * Math.PI * 2,
+      waveSpeed: 0.01 + Math.random() * 0.01,
+      waveAmplitude: (1.5 + Math.random() * 2) * dpr,
+      time: 0,
+      spawnTime: now + delays[i], // Delayed spawn time
+      spawnDuration: animDuration,
+      spawnOpacity: 0, // Start invisible
+      shadowScale: 0,
+      hasBeenClicked: false,
+      isAutoSpawned: true,
+      ignoreGravity: true,
+      driftSpeedMultiplier: 1.0,
+      isStatic: false, // Allow physics/drift
+      is404Animating: true // Enable staggered animation
+    });
+  }
 }
 
 // Quickly spawn initial shapes on page load around the text
 function spawnInitialShapes() {
+  // For 404 page, create static shapes at the bottom
+  if (is404Page) {
+    createStatic404Shapes();
+    return;
+  }
+  
   const dpr = window.devicePixelRatio || 1;
   
   // Get the text element position
@@ -512,19 +647,20 @@ function spawnInitialShapes() {
   const textCenterX = rect ? (rect.left + rect.width / 2) * dpr : canvas.width / 2;
   const textCenterY = rect ? (rect.top + rect.height / 2) * dpr : canvas.height / 2;
   
-  // Positions within 720x400 inner zone but outside 400x96 clear zone
+  // Positions within inner zone but outside clear zone
   // Zone center is offset 64px up from text center to match CSS translateY(-64px)
   const gravityOffsetY = 64;
+  const positionScale = isMobile ? 0.45 : 1.0;
   const positions = [
-    { x: -300, y: -60 },   // far left upper
-    { x: -160, y: -100 },  // upper left
-    { x: 0, y: -120 },     // upper center
-    { x: 160, y: -100 },   // upper right
-    { x: 300, y: -60 },    // far right upper
-    { x: -300, y: 60 },    // far left lower
-    { x: -160, y: 100 },   // lower left
-    { x: 0, y: 120 },      // lower center
-    { x: 160, y: 100 },    // lower right
+    { x: -300 * positionScale, y: -60 * positionScale },   // far left upper
+    { x: -160 * positionScale, y: -100 * positionScale },  // upper left
+    { x: 0, y: -120 * positionScale },                     // upper center
+    { x: 160 * positionScale, y: -100 * positionScale },   // upper right
+    { x: 300 * positionScale, y: -60 * positionScale },    // far right upper
+    { x: -300 * positionScale, y: 60 * positionScale },    // far left lower
+    { x: -160 * positionScale, y: 100 * positionScale },   // lower left
+    { x: 0, y: 120 * positionScale },                      // lower center
+    { x: 160 * positionScale, y: 100 * positionScale },    // lower right
   ];
   
   const initialCount = isLandingPage ? 9 : 6;
@@ -550,11 +686,16 @@ function spawnInitialShapes() {
 }
 
 // Spawn initial shapes with delay to let text animation complete
-setTimeout(spawnInitialShapes, 1300);
+if (is404Page) {
+  // For 404 page, spawn after a short delay to ensure WebGL is fully ready
+  setTimeout(spawnInitialShapes, 300);
+} else {
+  setTimeout(spawnInitialShapes, 1300);
+}
 
-// Auto-spawn shapes when fewer than 6 are active
+// Auto-spawn shapes when fewer than 6 are active (skip for 404 page)
 setInterval(() => {
-  if (!isLandingPage) return;
+  if (!isLandingPage || is404Page) return;
   
   const activeShapes = shapes.filter(s => !s.popping).length;
   if (activeShapes < 6) {
@@ -564,8 +705,9 @@ setInterval(() => {
     const textCenterX = rect ? (rect.left + rect.width / 2) * dpr : canvas.width / 2;
     const textCenterY = rect ? (rect.top + rect.height / 2) * dpr : canvas.height / 2;
     
-    const minDistance = 100 * dpr;
-    const maxDistance = 200 * dpr;
+    const distanceScale = isMobile ? 0.5 : 1.0;
+    const minDistance = 100 * dpr * distanceScale;
+    const maxDistance = 200 * dpr * distanceScale;
     const angle = Math.random() * Math.PI * 2;
     const distance = minDistance + Math.random() * (maxDistance - minDistance);
     const x = textCenterX + Math.cos(angle) * distance;
@@ -644,20 +786,27 @@ let clearZoneHalfW = 200;
 let clearZoneHalfH = 48;
 let innerZoneHalfW = 360;
 let innerZoneHalfH = 200;
-let outwardDriftSpeed = 0.175;
-let inwardDriftSpeed = 0.05;
-let pushStrengthDrift = 0.15;
+let outwardDriftSpeed = 0.1264375;
+let inwardDriftSpeed = 0.036125;
+let pushStrengthDrift = 0.108375;
 
 function updateZones() {
-  clearZoneHalfW = 200 * dpr;
-  clearZoneHalfH = 48 * dpr;
-  innerZoneHalfW = 360 * dpr;
-  innerZoneHalfH = 200 * dpr;
+  if (isMobile) {
+    clearZoneHalfW = 100 * dpr;
+    clearZoneHalfH = 32 * dpr;
+    innerZoneHalfW = 160 * dpr;
+    innerZoneHalfH = 100 * dpr;
+  } else {
+    clearZoneHalfW = 200 * dpr;
+    clearZoneHalfH = 48 * dpr;
+    innerZoneHalfW = 360 * dpr;
+    innerZoneHalfH = 200 * dpr;
+  }
   cornerRadius = 12.0 * dpr;
-  const driftMultiplier = isMobile ? 2.5 : 1.0;
-  outwardDriftSpeed = 0.175 * dpr * 0.02 * driftMultiplier;
-  inwardDriftSpeed = 0.05 * dpr * 0.02 * driftMultiplier;
-  pushStrengthDrift = 0.15 * dpr * 0.05 * driftMultiplier;
+  const driftMultiplier = isMobile ? 1.2 : 1.0;
+  outwardDriftSpeed = 0.1264375 * dpr * 0.02 * driftMultiplier;
+  inwardDriftSpeed = 0.036125 * dpr * 0.02 * driftMultiplier;
+  pushStrengthDrift = 0.108375 * dpr * 0.05 * driftMultiplier;
 }
 updateZones();
 window.addEventListener('resize', updateZones);
@@ -696,7 +845,11 @@ function render() {
     // On landing page, apply drift behavior
     // Gravity zones are offset 64px up from text center to match CSS translateY
     const gravityOffsetY = 64 * dpr;
-    if (isLandingPage && !shape.popping) {
+    
+    // Skip physics for static shapes (404 page)
+    if (shape.isStatic) {
+      // No physics, just render
+    } else if (isLandingPage && !shape.popping) {
       const dx = shape.x - textCenterX;
       const dy = shape.baseY - (textCenterY - gravityOffsetY);
       const inClear = isInClearZone(dx, dy);
@@ -709,10 +862,15 @@ function render() {
       const effectiveRadiusY = shapeRadius + wavePadding;
       const inClearExpanded = Math.abs(dx) < (clearZoneHalfW + effectiveRadiusX) && Math.abs(dy) < (clearZoneHalfH + effectiveRadiusY);
       
+      // Reduce drift for auto-spawned shapes on mobile
+      const autoSpawnedMobileMultiplier = (isMobile && shape.isAutoSpawned) ? 0.3 : 1.0;
+      
+      const driftMultiplier = shape.driftSpeedMultiplier || 1.0;
+      
       if (inClear || inClearExpanded) {
         // Inside or near clear zone: ALWAYS drift outward (ignores ignoreGravity)
         const angle = Math.atan2(dy, dx);
-        const pushForce = inClear ? pushStrengthDrift * 2 : pushStrengthDrift;
+        const pushForce = (inClear ? pushStrengthDrift * 4 : pushStrengthDrift * 2) * autoSpawnedMobileMultiplier * driftMultiplier;
         shape.vx += Math.cos(angle) * pushForce;
         shape.vy += Math.sin(angle) * pushForce;
       } else if (inInner && !shape.ignoreGravity) {
@@ -724,8 +882,8 @@ function render() {
         // Only drift inward if not too close to expanded clear zone boundary
         if (distToClearX > 30 * dpr || distToClearY > 30 * dpr) {
           const angle = Math.atan2(-dy, -dx);
-          shape.vx += Math.cos(angle) * inwardDriftSpeed;
-          shape.vy += Math.sin(angle) * inwardDriftSpeed;
+          shape.vx += Math.cos(angle) * inwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
+          shape.vy += Math.sin(angle) * inwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
         } else {
           // Near boundary: reduce velocity to settle
           shape.vx *= 0.92;
@@ -734,8 +892,8 @@ function render() {
       } else if (!shape.ignoreGravity) {
         // Outside inner zone: drift outward toward viewport edge
         const angle = Math.atan2(dy, dx);
-        shape.vx += Math.cos(angle) * outwardDriftSpeed;
-        shape.vy += Math.sin(angle) * outwardDriftSpeed;
+        shape.vx += Math.cos(angle) * outwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
+        shape.vy += Math.sin(angle) * outwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
       }
       
       // Apply friction to smooth movement
@@ -746,9 +904,26 @@ function render() {
     shape.x += shape.vx;
     shape.baseY += shape.vy;
     
+    // 404 page: continuous downward drift (starts during animation, not after)
+    if (is404Page && !shape.popping) {
+      // Account for shape size, wave amplitude, and extra padding
+      const shapePadding = shape.size * 0.6 + shape.waveAmplitude + 60 * dpr;
+      const bottomBoundary = canvas.height - shapePadding;
+      if (shape.baseY < bottomBoundary) {
+        shape.baseY += 0.5 * dpr; // Constant downward movement (slowed)
+        shape.targetY += 0.5 * dpr; // Also move target during animation
+        // Clamp to bottom if overshooting
+        if (shape.baseY > bottomBoundary) {
+          shape.baseY = bottomBoundary;
+          shape.targetY = bottomBoundary;
+        }
+      }
+    }
+    
     // Hard boundary enforcement: prevent shapes from entering clear zone
     // Account for shape radius and wave amplitude to keep entire shape outside
-    if (isLandingPage && !shape.popping) {
+    // Skip for 404 page which has different behavior
+    if (isLandingPage && !is404Page && !shape.popping) {
       const gravityOffsetY = 64 * dpr;
       const dx = shape.x - textCenterX;
       const dy = shape.baseY - (textCenterY - gravityOffsetY);
@@ -785,9 +960,14 @@ function render() {
     }
     
     shape.time += shape.waveSpeed;
-    // Add Y-axis drift wobble as visual offset
-    const yDriftWobble = Math.sin(shape.time * 0.8 + shape.wavePhase) * 4 * dpr;
-    shape.y = shape.baseY + Math.sin(shape.time + shape.wavePhase) * shape.waveAmplitude + yDriftWobble;
+    // For static shapes (404 page), keep position fixed
+    if (shape.isStatic) {
+      shape.y = shape.baseY;
+    } else {
+      // Add Y-axis drift wobble as visual offset
+      const yDriftWobble = Math.sin(shape.time * 0.8 + shape.wavePhase) * 4 * dpr;
+      shape.y = shape.baseY + Math.sin(shape.time + shape.wavePhase) * shape.waveAmplitude + yDriftWobble;
+    }
     shape.rotation += shape.rotationSpeed;
 
     if (shape.popping) {
@@ -818,27 +998,72 @@ function render() {
       }
     } else if (shape.spawnTime) {
       const elapsed = performance.now() - shape.spawnTime;
-      const t = Math.min(elapsed / shape.spawnDuration, 1);
       
-      if (t < 0.6) {
-        const phase1 = t / 0.6;
-        const ease1 = phase1 < 0.5 ? 2 * phase1 * phase1 : 1 - Math.pow(-2 * phase1 + 2, 2) / 2;
-        shape.scale = 0.5 + ease1 * 0.6;
-        shape.spawnOpacity = 1;
-        shape.shadowScale = ease1 * 1.1;
+      // Handle 404 page staggered animation (same as standard but with slide-down)
+      if (shape.is404Animating) {
+        if (elapsed < 0) {
+          // Not yet started - keep invisible at start position
+          shape.scale = 0;
+          shape.spawnOpacity = 0;
+          shape.shadowScale = 0;
+          shape.y = shape.startY;
+        } else {
+          const t = Math.min(elapsed / shape.spawnDuration, 1);
+          
+          // Use same scale animation as standard spawn
+          if (t < 0.6) {
+            const phase1 = t / 0.6;
+            const ease1 = phase1 < 0.5 ? 2 * phase1 * phase1 : 1 - Math.pow(-2 * phase1 + 2, 2) / 2;
+            shape.scale = 0.5 + ease1 * 0.6;
+            shape.spawnOpacity = 1;
+            shape.shadowScale = ease1 * 1.1;
+          } else {
+            const phase2 = (t - 0.6) / 0.4;
+            const ease2 = phase2 < 0.5 ? 2 * phase2 * phase2 : 1 - Math.pow(-2 * phase2 + 2, 2) / 2;
+            shape.scale = 1.1 - ease2 * 0.1;
+            shape.spawnOpacity = 1;
+            shape.shadowScale = 1.1 - ease2 * 0.1;
+          }
+          
+          // Animate Y position from startY to targetY
+          const easeOut = 1 - Math.pow(1 - t, 3);
+          shape.y = shape.startY + (shape.targetY - shape.startY) * easeOut;
+          shape.baseY = shape.y;
+          
+          if (t >= 1) {
+            shape.spawnTime = null;
+            shape.scale = 1;
+            shape.spawnOpacity = 1;
+            shape.shadowScale = 1;
+            shape.y = shape.targetY;
+            shape.baseY = shape.targetY;
+            shape.is404Animating = false;
+          }
+        }
       } else {
-        const phase2 = (t - 0.6) / 0.4;
-        const ease2 = phase2 < 0.5 ? 2 * phase2 * phase2 : 1 - Math.pow(-2 * phase2 + 2, 2) / 2;
-        shape.scale = 1.1 - ease2 * 0.1;
-        shape.spawnOpacity = 1;
-        shape.shadowScale = 1.1 - ease2 * 0.1;
-      }
-      
-      if (t >= 1) {
-        shape.spawnTime = null;
-        shape.scale = 1;
-        shape.spawnOpacity = 1;
-        shape.shadowScale = 1;
+        // Standard spawn animation for other pages
+        const t = Math.min(elapsed / shape.spawnDuration, 1);
+        
+        if (t < 0.6) {
+          const phase1 = t / 0.6;
+          const ease1 = phase1 < 0.5 ? 2 * phase1 * phase1 : 1 - Math.pow(-2 * phase1 + 2, 2) / 2;
+          shape.scale = 0.5 + ease1 * 0.6;
+          shape.spawnOpacity = 1;
+          shape.shadowScale = ease1 * 1.1;
+        } else {
+          const phase2 = (t - 0.6) / 0.4;
+          const ease2 = phase2 < 0.5 ? 2 * phase2 * phase2 : 1 - Math.pow(-2 * phase2 + 2, 2) / 2;
+          shape.scale = 1.1 - ease2 * 0.1;
+          shape.spawnOpacity = 1;
+          shape.shadowScale = 1.1 - ease2 * 0.1;
+        }
+        
+        if (t >= 1) {
+          shape.spawnTime = null;
+          shape.scale = 1;
+          shape.spawnOpacity = 1;
+          shape.shadowScale = 1;
+        }
       }
     }
 
@@ -910,7 +1135,6 @@ function render() {
 }
 
 render();
-console.log('WebGL Shape Animation ready - click anywhere to create shapes!');
 
 // Wiggly underline for project links
 const underlineColors = [
