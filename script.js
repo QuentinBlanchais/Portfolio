@@ -473,13 +473,13 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
 
-  const basePush = isMobile ? 3.3 : 5.0;
-  const strength = (basePush + Math.random() * 0.7) * dpr;
+  const basePush = isMobile ? 1.5 : 2.5;
+  const strength = (basePush + Math.random() * 0.3) * dpr;
 
   shape.vx += Math.cos(pushAngle) * strength;
   shape.vy += Math.sin(pushAngle) * strength;
 
-  const maxSpeed = isMobile ? 1.5 * dpr : 2.0 * dpr;
+  const maxSpeed = isMobile ? 1.0 * dpr : 1.5 * dpr;
   const speed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
   if (speed > maxSpeed) {
     const ratio = maxSpeed / speed;
@@ -490,7 +490,7 @@ function pushShape(shape, fromX, fromY) {
   shape.rotationSpeed += (Math.random() - 0.5) * 0.003;
   shape.ignoreGravity = true;
   shape.ignoreGravityUntil = performance.now() + 2000;
-  shape.driftSpeedMultiplier *= 2.6;
+  shape.driftSpeedMultiplier = 1.0;
 }
 
 function handleInteraction(clientX, clientY, event) {
@@ -637,10 +637,29 @@ function createShapeAt(x, y, isAutoSpawned = false) {
   const waveSpeed = 0.01 + Math.random() * 0.01;
   const waveAmplitude = (1.5 + Math.random() * 2) * dpr;
 
+  let pullTargetX = x;
+  let pullTargetY = y;
+  if (!isAutoSpawned && isLandingPage && !is404Page) {
+    const el = document.querySelector('.content-wrapper');
+    const rect = el ? el.getBoundingClientRect() : null;
+    const tcx = rect ? (rect.left + rect.width / 2) * dpr : canvasWidth / 2;
+    const tcy = rect ? (rect.top + rect.height / 2) * dpr : canvasHeight / 2;
+    const gravOff = 64 * dpr;
+    const distScale = isMobile ? 0.5 : 1.0;
+    const minDist = 100 * dpr * distScale;
+    const maxDist = 200 * dpr * distScale;
+    const rAngle = Math.random() * Math.PI * 2;
+    const rDist = minDist + Math.random() * (maxDist - minDist);
+    pullTargetX = tcx + Math.cos(rAngle) * rDist;
+    pullTargetY = (tcy - gravOff) + Math.sin(rAngle) * rDist;
+  }
+
   shapes.push({
     x,
     y,
     baseY: y,
+    spawnX: pullTargetX,
+    spawnBaseY: pullTargetY,
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed,
     shapeType,
@@ -780,7 +799,7 @@ function spawnInitialShapes() {
     const spreadX = isMobile ? 173 : 346;
     const spreadY = isMobile ? 115 : 216;
 
-    const staggerDelay = 250;
+    const staggerDelay = 300;
     const spawnNow = performance.now();
     for (let i = 0; i < initialCount; i++) {
       const x = centerX + (Math.random() - 0.5) * spreadX * dpr;
@@ -791,7 +810,7 @@ function spawnInitialShapes() {
       s.spawnOpacity = 0;
       s.shadowScale = 0;
       s.spawnTime = spawnNow + i * staggerDelay;
-      s.spawnDuration = 700;
+      s.spawnDuration = 840;
     }
     return;
   }
@@ -825,7 +844,7 @@ function spawnInitialShapes() {
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
 
-  const staggerDelay2 = 250;
+  const staggerDelay2 = 300;
   const spawnNow2 = performance.now();
   for (let i = 0; i < initialCount; i++) {
     const pos = positions[indices[i]];
@@ -837,7 +856,7 @@ function spawnInitialShapes() {
     s.spawnOpacity = 0;
     s.shadowScale = 0;
     s.spawnTime = spawnNow2 + i * staggerDelay2;
-    s.spawnDuration = 700;
+    s.spawnDuration = 840;
   }
 }
 
@@ -1007,21 +1026,18 @@ function render() {
       const driftMultiplier = shape.driftSpeedMultiplier || 1.0;
       const autoSpawnedMobileMultiplier = (isMobile && shape.isAutoSpawned) ? 0.3 : 1.0;
 
-      if (!shape.ignoreGravity) {
-        const centerX = canvasWidth / 2;
-        const centerY = canvasHeight / 2;
-        const dx = shape.x - centerX;
-        const dy = shape.baseY - centerY;
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const outwardStrength = 0.0008 * dpr * driftMultiplier * autoSpawnedMobileMultiplier;
-        shape.vx += (dx / dist) * outwardStrength;
-        shape.vy += (dy / dist) * outwardStrength;
-        shape.vx += (Math.random() - 0.5) * 0.001 * dpr * driftMultiplier * autoSpawnedMobileMultiplier;
-        shape.vy += (Math.random() - 0.5) * 0.001 * dpr * driftMultiplier * autoSpawnedMobileMultiplier;
+      if (shape.spawnX !== undefined) {
+        const pullDx = shape.spawnX - shape.x;
+        const pullDy = shape.spawnBaseY - shape.baseY;
+        const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
+        const normalizedDist = pullDist / (50 * dpr);
+        const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
+        shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+        shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
       }
 
-      shape.vx *= 0.99;
-      shape.vy *= 0.99;
+      shape.vx *= 0.97;
+      shape.vy *= 0.97;
     } else if (isLandingPage && !shape.popping) {
       const dx = shape.x - textCenterX;
       const dy = shape.baseY - (textCenterY - gravityOffsetY);
@@ -1044,26 +1060,20 @@ function render() {
         const pushForce = (inClear ? pushStrengthDrift * 4 : pushStrengthDrift * 2) * autoSpawnedMobileMultiplier * driftMultiplier;
         shape.vx += Math.cos(angle) * pushForce;
         shape.vy += Math.sin(angle) * pushForce;
-      } else if (inInner && !shape.ignoreGravity) {
-        const distToClearX = absDx - (clearZoneHalfW + effectiveRadiusX);
-        const distToClearY = absDy - (clearZoneHalfH + effectiveRadiusY);
-
-        if (distToClearX > 30 * dpr || distToClearY > 30 * dpr) {
-          const angle = Math.atan2(-dy, -dx);
-          shape.vx += Math.cos(angle) * inwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
-          shape.vy += Math.sin(angle) * inwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
-        } else {
-          shape.vx *= 0.92;
-          shape.vy *= 0.92;
-        }
-      } else if (!shape.ignoreGravity) {
-        const angle = Math.atan2(dy, dx);
-        shape.vx += Math.cos(angle) * outwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
-        shape.vy += Math.sin(angle) * outwardDriftSpeed * autoSpawnedMobileMultiplier * driftMultiplier;
       }
 
-      shape.vx *= 0.98;
-      shape.vy *= 0.98;
+      if (shape.spawnX !== undefined) {
+        const pullDx = shape.spawnX - shape.x;
+        const pullDy = shape.spawnBaseY - shape.baseY;
+        const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
+        const normalizedDist = pullDist / (50 * dpr);
+        const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
+        shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+        shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+      }
+
+      shape.vx *= 0.97;
+      shape.vy *= 0.97;
     }
 
     shape.x += shape.vx;
@@ -1083,31 +1093,12 @@ function render() {
       }
     }
 
-    if (isLandingPage && !is404Page && !isIndexPage && !shape.popping) {
-      const dx = shape.x - textCenterX;
-      const dy = shape.baseY - (textCenterY - gravityOffsetY);
-
-      const shapeRadius = shape.size * shape.scale * 0.5;
-      const wavePadding = shape.waveAmplitude + 8 * dpr;
-      const effectiveRadiusX = shapeRadius;
-      const effectiveRadiusY = shapeRadius + wavePadding;
-
-      const expandedClearW = clearZoneHalfW + effectiveRadiusX;
-      const expandedClearH = clearZoneHalfH + effectiveRadiusY;
-
-      if (Math.abs(dx) < expandedClearW && Math.abs(dy) < expandedClearH) {
-        const overlapX = expandedClearW - Math.abs(dx);
-        const overlapY = expandedClearH - Math.abs(dy);
-
-        const clearZoneDriftSpeed = outwardDriftSpeed * 0.5;
-        if (overlapX < overlapY) {
-          shape.vx += (dx >= 0 ? clearZoneDriftSpeed : -clearZoneDriftSpeed);
-        } else {
-          shape.vy += (dy >= 0 ? clearZoneDriftSpeed : -clearZoneDriftSpeed);
-        }
-        shape.vx *= 0.98;
-        shape.vy *= 0.98;
-      }
+    if (isLandingPage && !is404Page && !isIndexPage && !shape.popping && !shape.isStatic) {
+      const shapePadding = shape.size * shape.scale * 0.5 + shape.waveAmplitude;
+      if (shape.x < shapePadding) { shape.x = shapePadding; shape.vx *= -0.3; }
+      if (shape.x > canvasWidth - shapePadding) { shape.x = canvasWidth - shapePadding; shape.vx *= -0.3; }
+      if (shape.baseY < shapePadding) { shape.baseY = shapePadding; shape.vy *= -0.3; }
+      if (shape.baseY > canvasHeight - shapePadding) { shape.baseY = canvasHeight - shapePadding; shape.vy *= -0.3; }
     }
 
     shape.time += shape.waveSpeed;
