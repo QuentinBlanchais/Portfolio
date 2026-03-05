@@ -473,13 +473,13 @@ function pushShape(shape, fromX, fromY) {
   const baseAngle = Math.atan2(dy, dx);
   const pushAngle = baseAngle + randomAngle;
 
-  const basePush = isMobile ? 1.5 : 2.5;
-  const strength = (basePush + Math.random() * 0.3) * dpr;
+  const basePush = isMobile ? 3.0 : 4.5;
+  const strength = (basePush + Math.random() * 0.5) * dpr;
 
   shape.vx += Math.cos(pushAngle) * strength;
   shape.vy += Math.sin(pushAngle) * strength;
 
-  const maxSpeed = isMobile ? 1.0 * dpr : 1.5 * dpr;
+  const maxSpeed = isMobile ? 2.5 * dpr : 3.5 * dpr;
   const speed = Math.sqrt(shape.vx * shape.vx + shape.vy * shape.vy);
   if (speed > maxSpeed) {
     const ratio = maxSpeed / speed;
@@ -654,14 +654,33 @@ function createShapeAt(x, y, isAutoSpawned = false) {
     pullTargetY = (tcy - gravOff) + Math.sin(rAngle) * rDist;
   }
 
+  let initVx = Math.cos(angle) * speed;
+  let initVy = Math.sin(angle) * speed;
+  if (!isAutoSpawned && isLandingPage && !is404Page) {
+    updateUIAvoidRects();
+    const shapeR = size * 0.5;
+    for (let ri = 0; ri < uiAvoidRects.length; ri++) {
+      const r = uiAvoidRects[ri];
+      if (x + shapeR > r.left && x - shapeR < r.right && y + shapeR > r.top && y - shapeR < r.bottom) {
+        const dx = pullTargetX - x;
+        const dy = pullTargetY - y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const kickSpeed = 8.0 * dpr;
+        initVx = (dx / dist) * kickSpeed;
+        initVy = (dy / dist) * kickSpeed;
+        break;
+      }
+    }
+  }
+
   shapes.push({
     x,
     y,
     baseY: y,
     spawnX: pullTargetX,
     spawnBaseY: pullTargetY,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
+    vx: initVx,
+    vy: initVy,
     shapeType,
     color: color.start,
     color2: color.end,
@@ -795,7 +814,7 @@ function spawnInitialShapes() {
     }
 
     const centerX = canvas.width / 2;
-    const centerY = isMobile ? canvas.height * 0.30 : canvas.height * 0.45;
+    const centerY = isMobile ? canvas.height * 0.20 : canvas.height * 0.35;
     const spreadX = isMobile ? 173 : 346;
     const spreadY = isMobile ? 115 : 216;
 
@@ -961,6 +980,91 @@ let outwardDriftSpeed = 0.012643750;
 let inwardDriftSpeed = 0.00361250;
 let pushStrengthDrift = 0.010837500;
 
+let uiAvoidRects = [];
+let uiAvoidRectsLastUpdate = -1000;
+
+function updateUIAvoidRects() {
+  const now = performance.now();
+  if (now - uiAvoidRectsLastUpdate < 500) return;
+  uiAvoidRectsLastUpdate = now;
+  uiAvoidRects = [];
+  const selectors = ['.header_landing', '.about-me-btn', '.tagline-container', '.projects', '.mobile-landing-footer'];
+  const padding = 30 * dpr;
+  selectors.forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    uiAvoidRects.push({
+      left: rect.left * dpr - padding,
+      top: rect.top * dpr - padding,
+      right: rect.right * dpr + padding,
+      bottom: rect.bottom * dpr + padding,
+      cx: (rect.left + rect.width / 2) * dpr,
+      cy: (rect.top + rect.height / 2) * dpr
+    });
+  });
+}
+
+function isInsideUIRect(x, y, radius) {
+  for (let i = 0; i < uiAvoidRects.length; i++) {
+    const r = uiAvoidRects[i];
+    if (x + radius > r.left && x - radius < r.right && y + radius > r.top && y - radius < r.bottom) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function pushOutOfUIRects(shape) {
+  const shapeR = shape.size * shape.scale * 0.5;
+  const proximityZone = 80 * dpr;
+  const proximityForce = 4.0 * dpr;
+  shape._overText = false;
+  for (let ri = 0; ri < uiAvoidRects.length; ri++) {
+    const r = uiAvoidRects[ri];
+    const expandedLeft = r.left - proximityZone;
+    const expandedRight = r.right + proximityZone;
+    const expandedTop = r.top - proximityZone;
+    const expandedBottom = r.bottom + proximityZone;
+    if (shape.x + shapeR > r.left && shape.x - shapeR < r.right && shape.baseY + shapeR > r.top && shape.baseY - shapeR < r.bottom) {
+      shape._overText = true;
+      const overlapL = (shape.x + shapeR) - r.left;
+      const overlapR = r.right - (shape.x - shapeR);
+      const overlapT = (shape.baseY + shapeR) - r.top;
+      const overlapB = r.bottom - (shape.baseY - shapeR);
+      const minOverlap = Math.min(overlapL, overlapR, overlapT, overlapB);
+      const teleportGap = 15 * dpr;
+      if (minOverlap === overlapL) {
+        shape.x = r.left - shapeR - teleportGap;
+      } else if (minOverlap === overlapR) {
+        shape.x = r.right + shapeR + teleportGap;
+      } else if (minOverlap === overlapT) {
+        shape.baseY = r.top - shapeR - teleportGap;
+      } else {
+        shape.baseY = r.bottom + shapeR + teleportGap;
+      }
+      if (shape.spawnX !== undefined) {
+        const dx = shape.spawnX - shape.x;
+        const dy = shape.spawnBaseY - shape.baseY;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const speed = 6.0 * dpr;
+        shape.vx = (dx / dist) * speed;
+        shape.vy = (dy / dist) * speed;
+      }
+    } else if (shape.x + shapeR > expandedLeft && shape.x - shapeR < expandedRight && shape.baseY + shapeR > expandedTop && shape.baseY - shapeR < expandedBottom) {
+      const cx = (r.left + r.right) * 0.5;
+      const cy = (r.top + r.bottom) * 0.5;
+      const dx = shape.x - cx;
+      const dy = shape.baseY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      shape.vx += (dx / dist) * proximityForce;
+      shape.vy += (dy / dist) * proximityForce;
+      shape._overText = true;
+    }
+  }
+}
+
 function updateZones() {
   const lvScale = getLargeViewportScale();
   if (isMobile) {
@@ -992,6 +1096,8 @@ function render() {
   }
   try {
   const now = performance.now();
+
+  updateUIAvoidRects();
 
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -1027,17 +1133,35 @@ function render() {
       const autoSpawnedMobileMultiplier = (isMobile && shape.isAutoSpawned) ? 0.3 : 1.0;
 
       if (shape.spawnX !== undefined) {
-        const pullDx = shape.spawnX - shape.x;
-        const pullDy = shape.spawnBaseY - shape.baseY;
-        const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
-        const normalizedDist = pullDist / (50 * dpr);
-        const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
-        shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
-        shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+        const shapeR = shape.size * shape.scale * 0.5;
+        if (isInsideUIRect(shape.spawnX, shape.spawnBaseY, shapeR)) {
+          for (let attempt = 0; attempt < 10; attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 80 * dpr + Math.random() * 120 * dpr;
+            const nx = shape.spawnX + Math.cos(angle) * dist;
+            const ny = shape.spawnBaseY + Math.sin(angle) * dist;
+            if (!isInsideUIRect(nx, ny, shapeR) && nx > shapeR && nx < canvasWidth - shapeR && ny > shapeR && ny < canvasHeight - shapeR) {
+              shape.spawnX = nx;
+              shape.spawnBaseY = ny;
+              break;
+            }
+          }
+        }
+        if (!isInsideUIRect(shape.spawnX, shape.spawnBaseY, shapeR)) {
+          const pullDx = shape.spawnX - shape.x;
+          const pullDy = shape.spawnBaseY - shape.baseY;
+          const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
+          const normalizedDist = pullDist / (50 * dpr);
+          const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
+          shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+          shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+        }
       }
 
-      shape.vx *= 0.97;
-      shape.vy *= 0.97;
+      if (!shape._overText) {
+        shape.vx *= 0.97;
+        shape.vy *= 0.97;
+      }
     } else if (isLandingPage && !shape.popping) {
       const dx = shape.x - textCenterX;
       const dy = shape.baseY - (textCenterY - gravityOffsetY);
@@ -1055,29 +1179,52 @@ function render() {
       const autoSpawnedMobileMultiplier = (isMobile && shape.isAutoSpawned) ? 0.3 : 1.0;
       const driftMultiplier = shape.driftSpeedMultiplier || 1.0;
 
-      if (inClear || inClearExpanded) {
-        const angle = Math.atan2(dy, dx);
-        const pushForce = (inClear ? pushStrengthDrift * 4 : pushStrengthDrift * 2) * autoSpawnedMobileMultiplier * driftMultiplier;
-        shape.vx += Math.cos(angle) * pushForce;
-        shape.vy += Math.sin(angle) * pushForce;
-      }
+      if (!shape._overText) {
+        if (inClear || inClearExpanded) {
+          const angle = Math.atan2(dy, dx);
+          const pushForce = (inClear ? pushStrengthDrift * 4 : pushStrengthDrift * 2) * autoSpawnedMobileMultiplier * driftMultiplier;
+          shape.vx += Math.cos(angle) * pushForce;
+          shape.vy += Math.sin(angle) * pushForce;
+        }
 
-      if (shape.spawnX !== undefined) {
-        const pullDx = shape.spawnX - shape.x;
-        const pullDy = shape.spawnBaseY - shape.baseY;
-        const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
-        const normalizedDist = pullDist / (50 * dpr);
-        const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
-        shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
-        shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
-      }
+        if (shape.spawnX !== undefined) {
+          const shapeR = shape.size * shape.scale * 0.5;
+          if (isInsideUIRect(shape.spawnX, shape.spawnBaseY, shapeR)) {
+            for (let attempt = 0; attempt < 10; attempt++) {
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 80 * dpr + Math.random() * 120 * dpr;
+              const nx = shape.spawnX + Math.cos(angle) * dist;
+              const ny = shape.spawnBaseY + Math.sin(angle) * dist;
+              if (!isInsideUIRect(nx, ny, shapeR) && nx > shapeR && nx < canvasWidth - shapeR && ny > shapeR && ny < canvasHeight - shapeR) {
+                shape.spawnX = nx;
+                shape.spawnBaseY = ny;
+                break;
+              }
+            }
+          }
+          if (!isInsideUIRect(shape.spawnX, shape.spawnBaseY, shapeR)) {
+            const pullDx = shape.spawnX - shape.x;
+            const pullDy = shape.spawnBaseY - shape.baseY;
+            const pullDist = Math.sqrt(pullDx * pullDx + pullDy * pullDy) || 1;
+            const normalizedDist = pullDist / (50 * dpr);
+            const pullStrength = 0.005 * dpr * autoSpawnedMobileMultiplier;
+            shape.vx += (pullDx / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+            shape.vy += (pullDy / pullDist) * pullStrength * Math.min(normalizedDist, 2.0);
+          }
+        }
 
-      shape.vx *= 0.97;
-      shape.vy *= 0.97;
+        shape.vx *= 0.97;
+        shape.vy *= 0.97;
+      }
     }
 
-    shape.x += shape.vx;
-    shape.baseY += shape.vy;
+    const overTextBoost = shape._overText ? 5.0 : 1.0;
+    shape.x += shape.vx * overTextBoost;
+    shape.baseY += shape.vy * overTextBoost;
+
+    if (isLandingPage && !is404Page && !isIndexPage && !shape.popping && !shape.isStatic) {
+      pushOutOfUIRects(shape);
+    }
 
     if (is404Page && !shape.popping) {
       const shapePadding = shape.size * 0.6 + shape.waveAmplitude + 60 * dpr;
@@ -1091,6 +1238,10 @@ function render() {
           if (shape.targetY !== undefined) shape.targetY = bottomBoundary;
         }
       }
+    }
+
+    if (isLandingPage && !is404Page && !isIndexPage && !shape.popping && !shape.isStatic) {
+      pushOutOfUIRects(shape);
     }
 
     if (isLandingPage && !is404Page && !isIndexPage && !shape.popping && !shape.isStatic) {
