@@ -10,6 +10,15 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>404 - Page Not Found</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.175/build/three.module.js",
+          "jsm/": "https://cdn.jsdelivr.net/npm/three@0.175/examples/jsm/",
+          "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/+esm"
+        }
+      }
+    </script>
     <link
       href="https://fonts.googleapis.com/css2?family=Caudex&display=swap"
       rel="stylesheet"
@@ -194,7 +203,6 @@
     </style>
   </head>
   <body>
-    <canvas id="glCanvas"></canvas>
     <div class="content">
       <div class="header">
         <a href="/" class="logo">
@@ -238,7 +246,8 @@
         </div>
       </div>
     </div>
-    <script src="script.js?v=190" defer></script>
+    <script src="script.js?v=192" defer></script>
+    <script type="module" src="physics.js"></script>
     <script>
       const h1 = document.querySelector(".error-code");
       let letterIndex = 0;
