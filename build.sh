@@ -8,6 +8,7 @@ cp -f *.json dist/ 2>/dev/null
 rm -f dist/package.json dist/package-lock.json 2>/dev/null
 
 cp -rf images/* dist/images/ 2>/dev/null
+cp -rf envs dist/envs 2>/dev/null
 
 for file in index.html coming-soon.html homepage.html 404.html script.js style.css; do
   if [ -f "$file" ]; then

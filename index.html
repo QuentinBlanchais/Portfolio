@@ -7,6 +7,15 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Homepage</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.175/build/three.module.js",
+        "jsm/": "https://cdn.jsdelivr.net/npm/three@0.175/examples/jsm/",
+        "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/+esm"
+      }
+    }
+  </script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" async></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,13 +60,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 10;
-      pointer-events: none;
-      will-change: transform;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
+      z-index: 0;
+      touch-action: none;
     }
     .content {
       position: relative;
@@ -99,6 +103,7 @@
     .about-me-btn {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 16px;
+      font-weight: 400;
       color: #1a1a1a;
       text-decoration: none;
       pointer-events: auto;
@@ -153,6 +158,7 @@
       pointer-events: auto;
       position: relative;
       left: 2px;
+      font-weight: 400;
       display: inline-block;
       transition: opacity 0.2s ease;
     }
@@ -181,7 +187,7 @@
     }
     .atlassian-link .wiggly-underline path {
       fill: none;
-      stroke: #469FF2;
+      stroke: #DEA800;
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -200,7 +206,7 @@
     }
     .main-content {
       position: absolute;
-      bottom: 80px;
+      bottom: 60px;
       left: 80px;
       width: 1520px;
       max-width: calc(100vw - 160px);
@@ -214,8 +220,8 @@
       max-width: 638px;
     }
     .tagline {
-      font-size: 32px;
-      line-height: 42px;
+      font-size: 24px;
+      line-height: 34px;
       user-select: none;
     }
     .projects {
@@ -231,7 +237,7 @@
       gap: 16px;
     }
     .project-link {
-      font-size: 64px;
+      font-size: 48px;
       line-height: 1.2;
       text-decoration: none;
       color: #1a1a1a;
@@ -268,6 +274,7 @@
     }
     .project-link .wiggly-underline path {
       fill: none;
+      stroke: #DEA800;
       stroke-width: 2.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -300,7 +307,7 @@
     }
     @media (max-width: 1520px) {
       .project-link {
-        font-size: 48px;
+        font-size: 32px;
       }
       .projects {
         max-width: 980px;
@@ -308,7 +315,7 @@
     }
     @media (max-width: 1024px) {
       .project-link {
-        font-size: 32px;
+        font-size: 16px;
         line-height: 42px;
       }
       .project-link .letter {
@@ -353,7 +360,7 @@
         z-index: 30;
         padding: 20px 20px 0 20px;
         padding-top: calc(20px + env(safe-area-inset-top, 0px));
-        background: #F5F1F1;
+        background: transparent;
         transition: opacity 0.3s ease-out;
       }
       .logo-text {
@@ -367,17 +374,17 @@
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
-        gap: 60px;
+        gap: 40px;
       }
       .tagline-container {
-        margin-top: 50vh;
+        margin-top: 70vh;
       }
       .project-link {
-        font-size: 34px;
+        font-size: 24px;
       }
       .tagline {
-        font-size: 21px;
-        line-height: 31px;
+        font-size: 17px;
+        line-height: 27px;
       }
       .hero {
         display: none;
@@ -2946,7 +2953,7 @@
     }
     .release-link .wiggly-underline path {
       fill: none;
-      stroke: #F24647;
+      stroke: #DEA800;
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -4199,7 +4206,7 @@
       flex-shrink: 0;
       border-radius: 16px;
       overflow: hidden;
-      background: linear-gradient(180deg, #F24647 0%, #BF1516 100%);
+      background: linear-gradient(180deg, #3D76DB 0%, #133578 100%);
       box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.05);
       opacity: 0;
       transform: scale(0.85) rotate(5deg);
@@ -4286,7 +4293,7 @@
     }
     .about-bio-section .bio-link .wiggly-underline path {
       fill: none;
-      stroke: #F24647;
+      stroke: #DEA800;
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
@@ -4604,7 +4611,7 @@
               <span>Present</span>
             </div>
             <div class="about-experience-info">
-              <p class="exp-title">Lead designer at <strong>Atlassian</strong></p>
+              <p class="exp-title">Lead designer at <strong>Atlassian</strong> 🇦🇺</p>
               <p class="exp-desc">Designing next-generation Jira experiences, from growth initiatives to agentic capabilities.</p>
             </div>
           </div>
@@ -4619,7 +4626,7 @@
               <span>Jan' 2023</span>
             </div>
             <div class="about-experience-info">
-              <p class="exp-title">Product designer consultant for <strong>BotMD</strong></p>
+              <p class="exp-title">Product designer consultant for <strong>BotMD</strong> 🇸🇬</p>
               <p class="exp-desc">Guided founders on their first doctor-facing app, using AI to capture and query patient data.</p>
             </div>
           </div>
@@ -4634,7 +4641,7 @@
               <span>Oct' 2019</span>
             </div>
             <div class="about-experience-info">
-              <p class="exp-title">Product designer at <strong>Meta</strong></p>
+              <p class="exp-title">Product designer at <strong>Meta</strong> 🇸🇬</p>
               <p class="exp-desc">Designed products to grow market penetration and net-new users acquisition in the South African and Indian markets.</p>
             </div>
           </div>
@@ -4649,13 +4656,13 @@
               <span>Aug' 2018</span>
             </div>
             <div class="about-experience-info">
-              <p class="exp-title">UX/UI design lead at <strong>eBay Classified Group</strong></p>
+              <p class="exp-title">UX/UI design lead at <strong>eBay Classified Group</strong> 🇨🇳</p>
               <p class="exp-desc">Drove core ad revenue growth for Gumtree and Vivanuncios.</p>
             </div>
           </div>
           <div class="about-experience-row">
             <div class="about-experience-dates">
-              <span>Aug' 2017</span>
+              <span>Oct' 2014</span>
               <div class="date-arrow">
                 <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M1 6H15M15 6L10 1M15 6L10 11" stroke="#1A1A1A" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -4664,7 +4671,7 @@
               <span>May 2017</span>
             </div>
             <div class="about-experience-info">
-              <p class="exp-title">Senior product designer at <strong>MING Labs</strong></p>
+              <p class="exp-title">Senior product designer at <strong>MING Labs</strong> 🇨🇳</p>
               <p class="exp-desc">Led projects ranging from e-commerce app to EV infotainment dashboard</p>
             </div>
           </div>
@@ -5803,18 +5810,17 @@
     (function() {
       function movePreviewForMobile() {
         const preview = document.getElementById('projectPreview');
-        const glCanvas = document.getElementById('glCanvas');
-        if (!preview || !glCanvas) return;
+        if (!preview) return;
         if (preview.parentElement !== document.body) {
-          document.body.insertBefore(preview, glCanvas);
+          document.body.appendChild(preview);
         }
       }
       movePreviewForMobile();
       window.addEventListener('resize', movePreviewForMobile);
     })();
   </script>
-  <canvas id="glCanvas"></canvas>
-  <script src="script.js?v=191"></script>
+  <script src="script.js?v=192"></script>
+  <script type="module" src="physics.js"></script>
   <lottie-player id="mouseHint" background="transparent" speed="1" style="position: fixed; left: 50%; top: 35%; transform: translate(-50%, -50%); width: 72px; height: 68px; opacity: 0; z-index: 5; transition: opacity 1.5s ease-in-out; pointer-events: none;" loop autoplay></lottie-player>
   
   <div class="content">
