@@ -59,7 +59,7 @@ const hdrPromise = new Promise((resolve) => {
   });
 });
 
-await RAPIER.init();
+const [_] = await Promise.all([hdrPromise, RAPIER.init()]);
 const gravity = { x: 0.0, y: 0, z: 0.0 };
 const world = new RAPIER.World(gravity);
 
@@ -71,7 +71,6 @@ for (let i = 0; i < numBodies; i++) {
   scene.add(body.mesh);
 }
 
-await hdrPromise;
 requestAnimationFrame(() => { canvas.style.opacity = '1'; });
 
 const mouseBall = getMouseBall(RAPIER, world);
